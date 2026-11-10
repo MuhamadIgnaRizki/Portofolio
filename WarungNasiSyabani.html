@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kasir Digital - Warung Nasi Syabani</title>
+    
+    <!-- Framework & Font Eksternal -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    colors: { 
+                        brand: { 50:'#f0fdf4', 100:'#dcfce7', 600:'#16a34a', 700:'#15803d', 800:'#166534' } 
+                    }, 
+                    fontFamily: { sans: ['Inter','sans-serif'] } 
+                } 
+            } 
+        }
+    </script>
+
+    <!-- CSS Internal -->
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt-modal-content, #receipt-modal-content * {
+                visibility: visible;
+            }
+            #receipt-modal-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 10px;
+                border: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans pb-20 md:pb-10">
+
+    <header class="bg-brand-600 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-brand-700 p-2.5 rounded-xl font-bold text-lg"><i class="fa-solid fa-utensils"></i></div>
+                <div><h1 class="font-bold text-base md:text-lg leading-tight">Warung Nasi Syabani</h1><p class="text-xs text-brand-100">Sistem Kasir Digital</p></div>
+            </div>
+            <button onclick="resetCart()" class="text-xs bg-brand-700 hover:bg-brand-800 text-white px-3 py-2 rounded-xl transition flex items-center gap-1.5"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-3 md:p-6 space-y-4">
+        <!-- TABS -->
+        <div class="grid grid-cols-3 gap-2 max-w-md md:max-w-none">
+            <button onclick="switchTab('pos')" id="tab-pos" class="py-2 px-3 text-center font-semibold text-xs rounded-xl bg-brand-600 text-white shadow"><i class="fa-solid fa-cash-register mr-1"></i> Kasir / POS</button>
+            <button onclick="switchTab('menu')" id="tab-menu" class="py-2 px-3 text-center font-semibold text-xs rounded-xl bg-white text-gray-600 border"><i class="fa-solid fa-list mr-1"></i> Kelola Menu</button>
+            <button onclick="switchTab('report')" id="tab-report" class="py-2 px-3 text-center font-semibold text-xs rounded-xl bg-white text-gray-600 border"><i class="fa-solid fa-chart-line mr-1"></i> Laporan</button>
+        </div>
+
+        <!-- POS VIEW -->
+        <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-7 space-y-3">
+                <div class="bg-white p-3 rounded-2xl border flex flex-col sm:flex-row gap-3">
+                    <select id="table-number" class="w-full sm:w-1/2 p-2 bg-gray-50 border rounded-xl text-xs font-medium">
+                        <option value="Bungkus">Bungkus / Takeaway</option>
+                        <option value="Meja 1">Meja 1</option><option value="Meja 2">Meja 2</option><option value="Meja 3">Meja 3</option>
+                        <option value="Meja 4">Meja 4</option><option value="Lesehan 1">Lesehan 1</option><option value="Lesehan 2">Lesehan 2</option>
+                    </select>
+                    <input type="text" id="search-menu" onkeyup="renderMenuGrid()" placeholder="Cari nama menu..." class="w-full sm:w-1/2 p-2 bg-gray-50 border rounded-xl text-xs">
+                </div>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="category-bar"></div>
+                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- CART -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border p-4 space-y-3 lg:sticky lg:top-20">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="font-bold text-xs"><i class="fa-solid fa-cart-shopping text-brand-600 mr-1"></i> Rincian Pesanan</h2>
+                    <span id="cart-item-count" class="bg-brand-100 text-brand-800 text-xs font-bold px-2 py-0.5 rounded-full">0 Item</span>
+                </div>
+                <div id="cart-items-container" class="space-y-2 max-h-72 overflow-y-auto divide-y"></div>
+                <div class="border-t pt-3 space-y-2">
+                    <div class="flex justify-between font-bold text-sm"><span>Total Bayar</span><span id="cart-total" class="text-brand-700">Rp 0</span></div>
+                    <button onclick="openPaymentModal()" id="btn-checkout" disabled class="w-full bg-brand-600 hover:bg-brand-700 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl shadow text-xs transition">Proses Pembayaran</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU VIEW -->
+        <div id="view-menu" class="hidden bg-white p-4 rounded-2xl border max-w-3xl mx-auto space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-sm"><i class="fa-solid fa-utensils text-brand-600 mr-1"></i> Daftar Menu</h2>
+                <button onclick="openAddMenuModal()" class="bg-brand-600 text-white text-xs px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i> Tambah Menu</button>
+            </div>
+            <table class="w-full text-xs text-left"><thead class="bg-gray-50 uppercase border-b"><tr><th class="p-2">Menu</th><th class="p-2">Kategori</th><th class="p-2 text-right">Harga</th><th class="p-2 text-center">Aksi</th></tr></thead><tbody id="manage-menu-list" class="divide-y"></tbody></table>
+        </div>
+
+        <!-- REPORT VIEW -->
+        <div id="view-report" class="hidden max-w-4xl mx-auto space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-2xl border"><p class="text-[11px] text-gray-500">Omset Hari Ini</p><h3 id="report-today-omset" class="text-base font-bold text-brand-700">Rp 0</h3><p id="report-today-count" class="text-[10px] text-gray-400">0 Transaksi</p></div>
+                <div class="bg-white p-3 rounded-2xl border"><p class="text-[11px] text-gray-500">Omset Bulan Ini</p><h3 id="report-month-omset" class="text-base font-bold text-blue-600">Rp 0</h3></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border space-y-3">
+                <div class="flex justify-between items-center gap-2">
+                    <h2 class="font-bold text-xs"><i class="fa-solid fa-receipt text-brand-600 mr-1"></i> Riwayat Transaksi</h2>
+                    <div class="flex gap-2">
+                        <input type="date" id="report-date-filter" onchange="renderReports()" class="border rounded-xl px-2 py-1 text-xs">
+                        <button onclick="exportReportsCSV()" class="bg-gray-100 hover:bg-gray-200 text-xs px-2.5 py-1 rounded-xl"><i class="fa-solid fa-file-csv mr-1"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-gray-50 border-b"><tr><th class="p-2">Nota & Waktu</th><th class="p-2">Meja</th><th class="p-2">Metode</th><th class="p-2 text-right">Total</th><th class="p-2 text-center">Aksi</th></tr></thead><tbody id="report-history-list" class="divide-y"></tbody></table></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PEMBAYARAN -->
+    <div id="modal-payment" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-sm">Pembayaran Kasir</h3>
+                <button onclick="closeModal('modal-payment')"><i class="fa-solid fa-xmark text-gray-400"></i></button>
+            </div>
+            <div class="bg-brand-50 p-2.5 rounded-xl text-center border border-brand-100"><p class="text-[11px] text-brand-800">Total Tagihan</p><p id="pay-modal-total" class="text-xl font-black text-brand-700">Rp 0</p></div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="setPaymentMethod('Tunai')" id="pay-method-cash" class="py-2 rounded-xl text-xs font-semibold border border-brand-600 bg-brand-50 text-brand-700">Tunai</button>
+                <button onclick="setPaymentMethod('QRIS')" id="pay-method-qris" class="py-2 rounded-xl text-xs font-semibold border bg-white text-gray-600">QRIS</button>
+            </div>
+            <!-- CASH FORM -->
+            <div id="cash-input-group" class="space-y-2">
+                <input type="number" id="cash-amount" oninput="calculateChange()" placeholder="Jumlah Uang Diterima" class="w-full p-2.5 border rounded-xl text-sm font-bold">
+                <div class="grid grid-cols-4 gap-1">
+                    <button onclick="setQuickCash('pas')" class="bg-gray-100 py-1.5 rounded text-xs font-medium">Pas</button>
+                    <button onclick="setQuickCash(20000)" class="bg-gray-100 py-1.5 rounded text-xs font-medium">20rb</button>
+                    <button onclick="setQuickCash(50000)" class="bg-gray-100 py-1.5 rounded text-xs font-medium">50rb</button>
+                    <button onclick="setQuickCash(100000)" class="bg-gray-100 py-1.5 rounded text-xs font-medium">100rb</button>
+                </div>
+                <div class="flex justify-between text-xs pt-1"><span>Kembalian:</span><span id="cash-change" class="font-bold">Rp 0</span></div>
+            </div>
+            <!-- TAMPILAN QRIS -->
+            <div id="qris-box" class="hidden text-center space-y-2 bg-gray-50 p-3 rounded-2xl border">
+                <img id="qris-display-img" src="" alt="QRIS Warung Syabani" class="w-44 h-44 mx-auto object-contain border bg-white rounded-xl shadow-sm p-1">
+                <p id="qris-nominal-text" class="text-xs font-bold text-brand-700">Tagihan: Rp 0</p>
+                <p class="text-[10px] text-gray-500">Scan QRIS melalui BCA / Mandiri / DANA / OVO</p>
+            </div>
+            <button onclick="processTransaction()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">Selesaikan & Cetak Struk</button>
+        </div>
+    </div>
+
+    <!-- MODAL STRUK -->
+    <div id="modal-receipt" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xs w-full p-4 shadow-2xl flex flex-col space-y-3">
+            <div class="flex justify-between items-center pb-1 border-b no-print"><span class="font-bold text-xs">Struk Pembayaran</span><button onclick="closeModal('modal-receipt')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="receipt-modal-content" class="text-[11px] font-mono space-y-2 border border-dashed p-3 rounded-xl bg-slate-50">
+                <div class="text-center"><h2 class="font-bold text-sm">WARUNG NASI SYABANI</h2><p class="text-[9px] text-gray-500">Jl. Raya Syabani No. 123</p></div>
+                <div class="border-t border-b border-dashed py-1 text-[10px] space-y-0.5">
+                    <div class="flex justify-between"><span>Nota:</span><b id="rec-id"></b></div>
+                    <div class="flex justify-between"><span>Waktu:</span><span id="rec-date"></span></div>
+                    <div class="flex justify-between"><span>Meja:</span><b id="rec-table"></b></div>
+                </div>
+                <div id="rec-items" class="space-y-1"></div>
+                <div class="border-t border-dashed pt-1 space-y-0.5 text-[10px]">
+                    <div class="flex justify-between font-bold text-xs"><span>TOTAL:</span><span id="rec-total"></span></div>
+                    <div class="flex justify-between"><span>Metode:</span><span id="rec-method"></span></div>
+                    <div class="flex justify-between"><span>Bayar:</span><span id="rec-pay"></span></div>
+                    <div class="flex justify-between"><span>Kembali:</span><span id="rec-change"></span></div>
+                </div>
+                <p class="text-center text-[10px] pt-1">--- Terima Kasih ---</p>
+            </div>
+            <div class="flex gap-2 no-print">
+                <button onclick="window.print()" class="flex-1 bg-brand-600 text-white font-bold py-2 rounded-xl text-xs"><i class="fa-solid fa-print mr-1"></i> Cetak</button>
+                <button onclick="closeModal('modal-receipt')" class="bg-gray-100 px-3 py-2 rounded-xl text-xs">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT/ADD MENU -->
+    <div id="modal-add-menu" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <form onsubmit="saveMenuItem(event)" class="bg-white rounded-3xl max-w-xs w-full p-4 space-y-3">
+            <h3 id="modal-menu-title" class="font-bold text-sm">Kelola Menu</h3>
+            <input type="hidden" id="edit-menu-id">
+            <input type="text" id="menu-name" required placeholder="Nama Menu" class="w-full p-2 border rounded-xl text-xs">
+            <select id="menu-category" class="w-full p-2 border rounded-xl text-xs">
+                <option value="Makanan">Makanan</option><option value="Minuman">Minuman</option><option value="Lauk">Lauk</option><option value="Pelengkap">Pelengkap</option>
+            </select>
+            <input type="number" id="menu-price" required placeholder="Harga (Rp)" class="w-full p-2 border rounded-xl text-xs">
+            <input type="text" id="menu-unit" placeholder="Satuan (porsi, kg, dll)" class="w-full p-2 border rounded-xl text-xs">
+            <div class="flex gap-2 pt-2"><button type="button" onclick="closeModal('modal-add-menu')" class="flex-1 bg-gray-100 py-2 rounded-xl text-xs">Batal</button><button type="submit" class="flex-1 bg-brand-600 text-white font-bold py-2 rounded-xl text-xs">Simpan</button></div>
+        </form>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-3 py-2 rounded-xl text-xs opacity-0 pointer-events-none transition-all z-50"></div>
+
+    <!-- JavaScript Internal -->
+    <script>
+        // DAFTAR MENU UTAMA (ASLI & TIDAK DIUBAH)
+        const DEFAULT_MENU = [
+            { id: '1', name: 'Nasi Liwet (Per Kg)', category: 'Makanan', price: 40000, unit: 'kg', icon: 'fa-bowl-rice' },
+            { id: '2', name: 'Paket Ayam Bakar', category: 'Makanan', price: 25000, unit: 'porsi', icon: 'fa-drumstick-bite' },
+            { id: '3', name: 'Nendoan (Per Porsi)', category: 'Makanan', price: 20000, unit: 'porsi', icon: 'fa-utensils' },
+            { id: '4', name: 'Ikan Mujair', category: 'Lauk', price: 10000, unit: 'ekor', icon: 'fa-fish' },
+            { id: '5', name: 'Ikan Mas (Per Kg)', category: 'Lauk', price: 75000, unit: 'kg', icon: 'fa-fish' },
+            { id: '6', name: 'Ikan Gurame (Per Kg)', category: 'Lauk', price: 130000, unit: 'kg', icon: 'fa-fish' },
+            { id: '7', name: 'Tahu / Tempe Goreng', category: 'Lauk', price: 5000, unit: 'pcs', icon: 'fa-cubes' },
+            { id: '8', name: 'Sambal Dadak + Lalapan', category: 'Pelengkap', price: 0, unit: 'porsi', icon: 'fa-pepper-hot' },
+            { id: '9', name: 'Tumis Kangkung', category: 'Pelengkap', price: 10000, unit: 'porsi', icon: 'fa-bowl-food' },
+            { id: '10', name: 'Nasi Timbel', category: 'Pelengkap', price: 7000, unit: 'porsi', icon: 'fa-bowl-rice' },
+            { id: '11', name: 'Tutut', category: 'Pelengkap', price: 10000, unit: 'porsi', icon: 'fa-mug-hot' },
+            { id: '12', name: 'Pencok Kacang (Per Porsi)', category: 'Pelengkap', price: 10000, unit: 'porsi', icon: 'fa-bowl-food' },
+            { id: '13', name: 'Jengkol Goreng (Per Porsi)', category: 'Pelengkap', price: 15000, unit: 'porsi', icon: 'fa-bowl-food' },
+            { id: '14', name: 'Kelapa Muda', category: 'Minuman', price: 10000, unit: 'gelas', icon: 'fa-glass-water' },
+            { id: '15', name: 'Jus Jeruk (Dingin)', category: 'Minuman', price: 7000, unit: 'gelas', icon: 'fa-citrus' },
+            { id: '16', name: 'Jus Jeruk (Panas)', category: 'Minuman', price: 7000, unit: 'cangkir', icon: 'fa-mug-hot' },
+            { id: '17', name: 'Teh Manis (Dingin)', category: 'Minuman', price: 6000, unit: 'gelas', icon: 'fa-glass-water' },
+            { id: '18', name: 'Teh Manis (Panas)', category: 'Minuman', price: 6000, unit: 'cangkir', icon: 'fa-mug-hot' }
+        ];
+
+        let menuItems = JSON.parse(localStorage.getItem('wn_syabani_menu')) || DEFAULT_MENU;
+        let transactions = JSON.parse(localStorage.getItem('wn_syabani_transactions')) || [];
+        let cart = [], activeCategory = 'Semua', activePaymentMethod = 'Tunai';
+
+        const fmtRp = (n) => n === 0 ? 'Gratis' : 'Rp ' + Number(n).toLocaleString('id-ID');
+        const getEl = (id) => document.getElementById(id);
+
+        window.onload = () => {
+            renderCategories(); renderMenuGrid(); renderManageMenu(); updateCartUI();
+            getEl('report-date-filter').value = new Date().toISOString().split('T')[0];
+            renderReports();
+        };
+
+        function switchTab(tab) {
+            ['pos', 'menu', 'report'].forEach(t => {
+                getEl(`tab-${t}`).className = t === tab ? 'py-2 px-3 text-center font-semibold text-xs rounded-xl bg-brand-600 text-white shadow' : 'py-2 px-3 text-center font-semibold text-xs rounded-xl bg-white text-gray-600 border';
+                getEl(`view-${t}`).classList.toggle('hidden', t !== tab);
+            });
+            if (tab === 'report') renderReports();
+        }
+
+        function renderCategories() {
+            getEl('category-bar').innerHTML = ['Semua', 'Makanan', 'Minuman', 'Lauk', 'Pelengkap'].map(cat => `
+                <button onclick="activeCategory='${cat}';renderCategories();renderMenuGrid();" class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap ${activeCategory === cat ? 'bg-brand-600 text-white' : 'bg-white text-gray-600 border'}">${cat}</button>
+            `).join('');
+        }
+
+        function renderMenuGrid() {
+            const q = getEl('search-menu').value.toLowerCase();
+            const filtered = menuItems.filter(m => (activeCategory === 'Semua' || m.category === activeCategory) && m.name.toLowerCase().includes(q));
+            getEl('menu-grid').innerHTML = filtered.length ? filtered.map(m => `
+                <div onclick="addToCart('${m.id}')" class="bg-white p-3 rounded-2xl border shadow-sm hover:border-brand-600 cursor-pointer flex flex-col justify-between active:scale-95">
+                    <div><div class="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1 text-xs"><i class="fa-solid ${m.icon || 'fa-utensils'}"></i></div>
+                    <h4 class="font-bold text-xs line-clamp-1">${m.name}</h4><span class="text-[10px] text-gray-400">${m.category}</span></div>
+                    <div class="mt-2 flex justify-between items-center border-t pt-1 text-[11px] font-bold text-brand-700"><span>${fmtRp(m.price)}</span><i class="fa-solid fa-plus bg-brand-100 p-1 rounded"></i></div>
+                </div>`).join('') : '<p class="col-span-full py-8 text-center text-gray-400 text-xs">Menu tidak ditemukan</p>';
+        }
+
+        function addToCart(id) {
+            const m = menuItems.find(x => x.id === id);
+            const found = cart.find(x => x.id === id);
+            found ? found.qty++ : cart.push({ ...m, qty: 1 });
+            updateCartUI(); showToast(`+1 ${m.name}`);
+        }
+
+        function updateQty(id, d) {
+            const i = cart.findIndex(x => x.id === id);
+            if (i > -1) { cart[i].qty += d; if (cart[i].qty <= 0) cart.splice(i, 1); }
+            updateCartUI();
+        }
+
+        function resetCart() { if (cart.length && confirm('Reset pesanan saat ini?')) { cart = []; updateCartUI(); } }
+
+        function updateCartUI() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            getEl('cart-items-container').innerHTML = cart.length ? cart.map(i => `
+                <div class="pt-1.5 flex justify-between items-center text-xs">
+                    <div class="flex-1"><h5 class="font-bold text-[11px]">${i.name}</h5><p class="text-[10px] text-gray-500">${fmtRp(i.price)} x ${i.qty}</p></div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="flex items-center border rounded-lg bg-gray-50"><button onclick="updateQty('${i.id}',-1)" class="w-5 h-5 font-bold">-</button><span class="w-4 text-center font-bold text-[11px]">${i.qty}</span><button onclick="updateQty('${i.id}',1)" class="w-5 h-5 font-bold">+</button></div>
+                        <span class="font-bold w-16 text-right">${fmtRp(i.price * i.qty)}</span>
+                    </div>
+                </div>`).join('') : '<p class="text-center py-8 text-gray-400 text-xs">Belum ada item dipilih</p>';
+            getEl('cart-item-count').textContent = `${cart.reduce((s, i) => s + i.qty, 0)} Item`;
+            getEl('cart-total').textContent = fmtRp(total);
+            getEl('btn-checkout').disabled = !cart.length;
+        }
+
+        function openPaymentModal() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            getEl('pay-modal-total').textContent = fmtRp(total);
+            getEl('cash-amount').value = '';
+            getEl('cash-change').textContent = 'Rp 0';
+            setPaymentMethod('Tunai');
+            getEl('modal-payment').classList.remove('hidden');
+        }
+
+        function setPaymentMethod(method) {
+            activePaymentMethod = method;
+            const isCash = method === 'Tunai';
+            getEl('pay-method-cash').className = `py-2 rounded-xl text-xs font-semibold border ${isCash ? 'border-brand-600 bg-brand-50 text-brand-700' : 'bg-white text-gray-600'}`;
+            getEl('pay-method-qris').className = `py-2 rounded-xl text-xs font-semibold border ${!isCash ? 'border-brand-600 bg-brand-50 text-brand-700' : 'bg-white text-gray-600'}`;
+            getEl('cash-input-group').classList.toggle('hidden', !isCash);
+            getEl('qris-box').classList.toggle('hidden', isCash);
+
+            if (!isCash) {
+                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+                getEl('qris-nominal-text').textContent = `Total: ${fmtRp(total)}`;
+            }
+        }
+
+        function calculateChange() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const cash = parseFloat(getEl('cash-amount').value) || 0;
+            const chg = cash - total;
+            getEl('cash-change').textContent = chg >= 0 ? fmtRp(chg) : `Kurang ${fmtRp(Math.abs(chg))}`;
+            getEl('cash-change').className = `font-bold ${chg >= 0 ? 'text-brand-700' : 'text-red-600'}`;
+        }
+
+        function setQuickCash(val) {
+            getEl('cash-amount').value = val === 'pas' ? cart.reduce((s, i) => s + (i.price * i.qty), 0) : val;
+            calculateChange();
+        }
+
+        function processTransaction() {
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            let cash = activePaymentMethod === 'Tunai' ? (parseFloat(getEl('cash-amount').value) || 0) : total;
+            if (activePaymentMethod === 'Tunai' && cash < total) return alert('Uang tunai kurang!');
+
+            const trx = {
+                id: '#TRX-' + Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toLocaleString('id-ID'),
+                timestamp: Date.now(),
+                table: getEl('table-number').value,
+                method: activePaymentMethod,
+                items: [...cart], total, cash, change: cash - total
+            };
+            transactions.unshift(trx);
+            localStorage.setItem('wn_syabani_transactions', JSON.stringify(transactions));
+            fillReceipt(trx);
+            closeModal('modal-payment');
+            cart = []; updateCartUI(); renderReports();
+            getEl('modal-receipt').classList.remove('hidden');
+        }
+
+        function fillReceipt(trx) {
+            getEl('rec-id').textContent = trx.id; getEl('rec-date').textContent = trx.date; getEl('rec-table').textContent = trx.table;
+            getEl('rec-total').textContent = fmtRp(trx.total); getEl('rec-method').textContent = trx.method;
+            getEl('rec-pay').textContent = fmtRp(trx.cash); getEl('rec-change').textContent = fmtRp(trx.change);
+            getEl('rec-items').innerHTML = trx.items.map(i => `<div class="flex justify-between"><span>${i.name} x${i.qty}</span><span>${fmtRp(i.price * i.qty)}</span></div>`).join('');
+        }
+
+        function renderManageMenu() {
+            getEl('manage-menu-list').innerHTML = menuItems.map(m => `
+                <tr><td class="p-2 font-medium">${m.name}</td><td class="p-2 text-gray-500">${m.category}</td><td class="p-2 text-right font-bold text-brand-700">${fmtRp(m.price)}</td>
+                <td class="p-2 text-center space-x-1.5"><button onclick="openEditMenu('${m.id}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMenu('${m.id}')" class="text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>
+            `).join('');
+        }
+
+        function openAddMenuModal() { getEl('edit-menu-id').value = ''; getEl('menu-name').value = ''; getEl('menu-price').value = ''; getEl('modal-add-menu').classList.remove('hidden'); }
+        function openEditMenu(id) {
+            const m = menuItems.find(x => x.id === id);
+            getEl('edit-menu-id').value = m.id; getEl('menu-name').value = m.name; getEl('menu-price').value = m.price; getEl('menu-category').value = m.category; getEl('menu-unit').value = m.unit || '';
+            getEl('modal-add-menu').classList.remove('hidden');
+        }
+        function saveMenuItem(e) {
+            e.preventDefault();
+            const id = getEl('edit-menu-id').value, name = getEl('menu-name').value, price = parseFloat(getEl('menu-price').value) || 0, category = getEl('menu-category').value, unit = getEl('menu-unit').value;
+            if (id) { const m = menuItems.find(x => x.id === id); Object.assign(m, { name, price, category, unit }); }
+            else { menuItems.push({ id: Date.now().toString(), name, price, category, unit, icon: 'fa-utensils' }); }
+            localStorage.setItem('wn_syabani_menu', JSON.stringify(menuItems));
+            renderMenuGrid(); renderManageMenu(); closeModal('modal-add-menu'); showToast('Menu disimpan');
+        }
+        function deleteMenu(id) { if (confirm('Hapus menu ini?')) { menuItems = menuItems.filter(x => x.id !== id); localStorage.setItem('wn_syabani_menu', JSON.stringify(menuItems)); renderMenuGrid(); renderManageMenu(); } }
+
+        function renderReports() {
+            const filter = getEl('report-date-filter').value;
+            let dayOmset = 0, dayCount = 0, monthOmset = 0;
+            const filtered = transactions.filter(t => {
+                const d = new Date(t.timestamp).toISOString().split('T')[0];
+                if (d === filter) { dayOmset += t.total; dayCount++; }
+                if (d.substring(0, 7) === filter.substring(0, 7)) monthOmset += t.total;
+                return d === filter;
+            });
+            getEl('report-today-omset').textContent = fmtRp(dayOmset);
+            getEl('report-today-count').textContent = `${dayCount} Transaksi`;
+            getEl('report-month-omset').textContent = fmtRp(monthOmset);
+            getEl('report-history-list').innerHTML = filtered.length ? filtered.map(t => `
+                <tr><td class="p-2">${t.date}<br><b>${t.id}</b></td><td class="p-2">${t.table}</td><td class="p-2">${t.method}</td><td class="p-2 text-right font-bold text-brand-700">${fmtRp(t.total)}</td>
+                <td class="p-2 text-center"><button onclick='fillReceipt(${JSON.stringify(t)});getEl("modal-receipt").classList.remove("hidden")' class="text-brand-600 mr-2"><i class="fa-solid fa-eye"></i></button><button onclick="deleteTrx('${t.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td></tr>
+            `).join('') : '<tr><td colspan="5" class="p-4 text-center text-gray-400">Tidak ada transaksi</td></tr>';
+        }
+
+        function deleteTrx(id) { if(confirm('Hapus riwayat?')) { transactions = transactions.filter(t => t.id !== id); localStorage.setItem('wn_syabani_transactions', JSON.stringify(transactions)); renderReports(); } }
+        function exportReportsCSV() {
+            let csv = 'ID,Waktu,Meja,Metode,Total\n' + transactions.map(t => `"${t.id}","${t.date}","${t.table}","${t.method}",${t.total}`).join('\n');
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'laporan_penjualan.csv'; a.click();
+        }
+
+        function closeModal(id) { getEl(id).classList.add('hidden'); }
+        function showToast(msg) { const t = getEl('toast'); t.textContent = msg; t.classList.remove('opacity-0', 'pointer-events-none'); setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2000); }
+    </script>
+</body>
+</html>
