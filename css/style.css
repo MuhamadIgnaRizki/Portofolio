@@ -1,0 +1,366 @@
+/* Reset Dasar */
+* {
+ margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+background-color: #f8fafc;
+color: #334155;
+line-height: 1.6;
+}
+
+.igna_container {
+width: 90%;
+max-width: 1100px;
+margin: 0 auto;
+}
+
+/* Header */
+.igna_header {
+background-color: #ffffff;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+position: sticky;
+top: 0;
+z-index: 1000;
+}
+
+.igna_nav_container {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 15px 0;
+}
+
+.igna_logo {
+font-size: 1.25rem;
+font-weight: 700;
+color: #1e293b;
+}
+
+.igna_logo span {
+color: #2563eb;
+}
+
+.igna_navbar ul {
+display: flex;
+list-style: none;
+gap: 24px;
+}
+
+.igna_navbar a {
+text-decoration: none;
+color: #475569;
+font-weight: 500;
+transition: color 0.3s;
+}
+
+.igna_navbar a:hover {
+color: #2563eb;
+}
+
+/* Hero Section */
+.igna_hero_section {
+padding: 40px 0;
+background-color: #ffffff;
+}
+
+.igna_hero_card {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 40px;
+background-color: #eff6ff;
+padding: 50px 40px;
+border-radius: 24px;
+}
+
+.igna_hero_text {
+flex: 1.2;
+}
+
+.igna_greeting {
+font-size: 1.1rem;
+color: #64748b;
+margin-bottom: 4px;
+}
+
+.igna_title {
+font-size: 2.5rem;
+color: #1e3a8a;
+font-weight: 800;
+line-height: 1.2;
+margin-bottom: 6px;
+}
+
+.igna_subtitle {
+font-size: 1.1rem;
+font-weight: 600;
+color: #2563eb;
+margin-bottom: 16px;
+}
+
+.igna_description {
+color: #475569;
+margin-bottom: 24px;
+max-width: 480px;
+}
+
+.igna_btn_group {
+display: flex;
+gap: 15px;
+}
+
+.igna_btn {
+padding: 10px 22px;
+border-radius: 8px;
+text-decoration: none;
+font-weight: 600;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+transition: all 0.3s ease;
+font-size: 0.95rem;
+}
+
+.igna_btn_primary {
+background-color: #2563eb;
+color: #ffffff;
+}
+
+.igna_btn_primary:hover {
+background-color: #1d4ed8;
+}
+
+.igna_btn_secondary {
+background-color: #ffffff;
+color: #2563eb;
+border: 1px solid #cbd5e1;
+}
+
+.igna_btn_secondary:hover {
+background-color: #f1f5f9;
+}
+
+.igna_hero_image {
+flex: 0.8;
+display: flex;
+justify-content: center;
+}
+
+.igna_illustration {
+font-size: 140px;
+color: #2563eb;
+}
+
+/* About Me Section */
+.igna_about_section {
+padding: 50px 0;
+}
+
+.igna_section_title {
+font-size: 1.8rem;
+color: #1e293b;
+margin-bottom: 24px;
+}
+
+.igna_about_card {
+display: flex;
+gap: 40px;
+align-items: center;
+background: #ffffff;
+padding: 35px;
+border-radius: 20px;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.igna_about_text {
+flex: 1.5;
+}
+
+.igna_about_text p {
+color: #475569;
+margin-bottom: 24px;
+}
+
+.igna_info_list {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.igna_info_item {
+display: flex;
+align-items: center;
+gap: 12px;
+color: #334155;
+font-weight: 500;
+}
+
+.igna_info_item i {
+color: #2563eb;
+width: 20px;
+}
+
+.igna_about_image {
+flex: 1;
+display: flex;
+justify-content: center;
+}
+
+.igna_about_image img {
+width: 200px;
+height: 200px;
+border-radius: 16px;
+object-fit: cover;
+}
+
+/* Skills*/
+.igna_skills_section {
+padding: 20px 0 40px;
+}
+
+.igna_skills_grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 15px;
+}
+
+.igna_skill_card {
+background-color: #ffffff;
+padding: 15px 20px;
+border-radius: 12px;
+display: flex;
+align-items: center;
+gap: 12px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+font-weight: 600;
+color: #334155;
+}
+
+.igna_skill_card i {
+font-size: 1.5rem;
+}
+
+/* Project */
+.igna_projects_section {
+padding: 20px 0 60px;
+}
+
+.igna_projects_grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+gap: 20px;
+}
+
+.igna_project_card {
+background: #ffffff;
+border-radius: 16px;
+overflow: hidden;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+display: flex;
+flex-direction: column;
+}
+
+.igna_project_img {
+background-color: #dbeafe;
+height: 160px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 50px;
+color: #2563eb;
+}
+
+.igna_project_info {
+padding: 20px;
+display: flex;
+flex-direction: column;
+flex-grow: 1;
+}
+
+.igna_project_info h3 {
+font-size: 1.15rem;
+color: #1e293b;
+margin-bottom: 8px;
+}
+
+.igna_project_info p {
+font-size: 0.9rem;
+color: #64748b;
+margin-bottom: 16px;
+flex-grow: 1;
+}
+
+.igna_project_link {
+text-decoration: none;
+color: #2563eb;
+font-weight: 600;
+font-size: 0.9rem;
+}
+
+.igna_project_link:hover {
+text-decoration: underline;
+}
+
+/* Footer */
+.igna_footer {
+background-color: #0f172a;
+color: #ffffff;
+padding: 40px 0 20px;
+margin-top: 40px;
+}
+
+.igna_footer_container {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding-bottom: 30px;
+border-bottom: 1px solid #1e293b;
+}
+
+.igna_footer_brand h3 {
+font-size: 1.25rem;
+margin-bottom: 6px;
+}
+
+.igna_footer_brand p {
+color: #94a3b8;
+font-size: 0.9rem;
+}
+
+.igna_footer_contact p {
+color: #cbd5e1;
+font-size: 0.9rem;
+margin-bottom: 6px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.igna_copyright {
+text-align: center;
+padding-top: 20px;
+color: #64748b;
+font-size: 0.85rem;
+}
+
+/* Responsif Tampilan HP */
+@media (max-width: 768px) {
+.igna_hero_card,
+.igna_about_card,
+.igna_footer_container {
+flex-direction: column;
+text-align: center;
+  }
+
+.igna_btn_group {
+justify-content: center;
+  }
+
+.igna_info_item {
+justify-content: center;
+  }
+}
