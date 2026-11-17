@@ -149,9 +149,11 @@ display: flex;
 justify-content: center;
 }
 
-.igna_illustration {
-font-size: 140px;
-color: #2563eb;
+.igna_illustration img {
+width: 100%;
+max-width: 420px;
+height: auto;
+border-radius: 12px;
 }
 
 /* About Me Section */
